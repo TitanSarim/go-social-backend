@@ -8,6 +8,8 @@ import (
 	"github.com/TitanSarim/go-social-backend/internal/store"
 )
 
+const version = "0.0.1"
+
 func main() {
 	cfg := config{
 		addr: env.GetString("ADDR", ":8100"),
@@ -17,6 +19,7 @@ func main() {
 			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 30),
 			maxIdleTime: env.GetString("DB_CONN_MAX_IDLE_TIME", "15m"),
 		},
+		env: env.GetString("ENV", "development"),
 	}
 	db, err := db.New(
 		cfg.db.addr,
