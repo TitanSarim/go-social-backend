@@ -32,6 +32,24 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error{
 	return nil
 }
 
+func (s *PostStore) Patch(ctx context.Context, id int64, post *Post) error {
+	query := `UPDATE posts 
+              SET content = $1, title = $2, tags = $3, updated_at = NOW() 
+              WHERE id = $4 
+              RETURNING updated_at`
+
+	err := s.db.QueryRowContext(ctx, query, post.Content, post.Title, pq.Array(post.Tags), id).Scan(&post.UpdatedAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		}
+		return err
+	}
+
+	return nil
+}
+
+
 func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error){
 	query := `SELECT id, content, title, user_id, tags, created_at, updated_at FROM posts WHERE id = $1`
 
@@ -50,3 +68,31 @@ func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error){
 
 	return &post, nil
 }
+
+func (s *PostStore) Delete(ctx context.Context, id int64) error {
+	// First, delete comments related to the post
+	queryComments := `DELETE FROM comments WHERE post_id = $1`
+	_, err := s.db.ExecContext(ctx, queryComments, id)
+	if err != nil {
+		return err
+	}
+
+	// Then, delete the post itself
+	queryPost := `DELETE FROM posts WHERE id = $1`
+	result, err := s.db.ExecContext(ctx, queryPost, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
