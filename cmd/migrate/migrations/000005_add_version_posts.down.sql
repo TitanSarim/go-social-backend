@@ -1,0 +1,2 @@
+ALTER TABLE posts
+AND COLUMN version INT DEFAULT 0;
