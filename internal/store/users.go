@@ -19,11 +19,24 @@ type UserStore struct {
 }
 
 
-func (s *UserStore) Create(ctx context.Context, user *User) error {
-	query := "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id"
-	err := s.db.QueryRowContext(ctx, query, user.Username, user.Email, user.Password).Scan(&user.ID, &user.CreatedAt)
+func (s *UserStore) Create(ctx context.Context, user *User) (*User, error) {
+	query := "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, created_at"
+	err := s.db.QueryRowContext(ctx, query, user.Username, user.Email, user.Password).
+		Scan(&user.ID, &user.CreatedAt)
 	if err != nil {
-        return err
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *UserStore) GetByID(ctx context.Context, id int64) (*User, error) {
+	query := "SELECT id, username, email, password, created_at, updated_at FROM users WHERE id = $1"
+	
+	user := &User{}
+    err := s.db.QueryRowContext(ctx, query, id).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt)
+	if err == sql.ErrNoRows {
+        return nil, err
     }
-	return nil
+	return user, nil
+   
 }

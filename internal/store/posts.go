@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/lib/pq"
 )
@@ -26,6 +27,10 @@ type PostStore struct {
 
 func (s *PostStore) Create(ctx context.Context, post *Post) error{
 	query := `INSERT INTO posts (content, title, user_id, tags) VALUES ($1, $2, $3, $4) RETURNING id, created_at, updated_at`
+	
+	ctx, cancel := context.WithTimeout(ctx, time.Second * 5)
+	defer cancel()
+	
 	err := s.db.QueryRowContext(ctx, query, post.Content, post.Title, post.UserID, pq.Array(post.Tags)).Scan(&post.ID, &post.CreatedAt, &post.UpdatedAt)
 	if err != nil {
         return err
@@ -38,6 +43,10 @@ func (s *PostStore) Patch(ctx context.Context, id int64, post *Post) error {
               SET content = $1, title = $2, tags = $3, version = version + 1, updated_at = NOW() 
               WHERE id = $4 AND version = $5
               RETURNING updated_at, version`
+
+			  
+	ctx, cancel := context.WithTimeout(ctx, time.Second * 5)
+	defer cancel()
 
 	err := s.db.QueryRowContext(ctx, query, post.Content, post.Title, pq.Array(post.Tags), id, post.version).Scan(&post.UpdatedAt, &post.version)
 	if err != nil {
@@ -53,6 +62,9 @@ func (s *PostStore) Patch(ctx context.Context, id int64, post *Post) error {
 
 func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error){
 	query := `SELECT id, content, title, user_id, tags, version, created_at, updated_at FROM posts WHERE id = $1`
+	
+	ctx, cancel := context.WithTimeout(ctx, time.Second * 5)
+	defer cancel()
 
     var post Post
     err := s.db.QueryRowContext(ctx, query, id).Scan(&post.ID, &post.Content, &post.Title, &post.UserID, pq.Array(&post.Tags), &post.version, &post.CreatedAt, &post.UpdatedAt)
@@ -73,6 +85,10 @@ func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error){
 func (s *PostStore) Delete(ctx context.Context, id int64) error {
 	// First, delete comments related to the post
 	queryComments := `DELETE FROM comments WHERE post_id = $1`
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second * 5)
+	defer cancel()
+
 	_, err := s.db.ExecContext(ctx, queryComments, id)
 	if err != nil {
 		return err
