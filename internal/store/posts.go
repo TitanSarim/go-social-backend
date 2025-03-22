@@ -17,8 +17,14 @@ type Post struct{
 	Tags     []string `json:"tags"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
-	version   int     `json:"version"`
+	Version   int     `json:"version"`
 	Comments []Comment `json:"comments"`
+	User     User     `json:"user"`
+}
+
+type PostWithMetadata struct {
+	Post
+	CommentCount int64 `json:"comment_count"`
 }
 
 type PostStore struct {
@@ -48,7 +54,7 @@ func (s *PostStore) Patch(ctx context.Context, id int64, post *Post) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second * 5)
 	defer cancel()
 
-	err := s.db.QueryRowContext(ctx, query, post.Content, post.Title, pq.Array(post.Tags), id, post.version).Scan(&post.UpdatedAt, &post.version)
+	err := s.db.QueryRowContext(ctx, query, post.Content, post.Title, pq.Array(post.Tags), id, post.Version).Scan(&post.UpdatedAt, &post.Version)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return ErrNotFound
@@ -67,7 +73,7 @@ func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error){
 	defer cancel()
 
     var post Post
-    err := s.db.QueryRowContext(ctx, query, id).Scan(&post.ID, &post.Content, &post.Title, &post.UserID, pq.Array(&post.Tags), &post.version, &post.CreatedAt, &post.UpdatedAt)
+    err := s.db.QueryRowContext(ctx, query, id).Scan(&post.ID, &post.Content, &post.Title, &post.UserID, pq.Array(&post.Tags), &post.Version, &post.CreatedAt, &post.UpdatedAt)
    
 	if err != nil{
 		switch{
