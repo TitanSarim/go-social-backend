@@ -13,3 +13,7 @@ migrate-up:
 .PHONY: migrate-down
 migrate-down:	
 	@migrate -path $(MIGRATIONS_PATH) -database "postgres://postgres:12345@localhost/go_social?sslmode=disable" down $(filter-out $@,$(MAKECMDGOALS))
+
+.PHONY: gen-docs
+gen-docs:
+	@swag init -g ./api/main.go -d cmd,internal && swag fmt
