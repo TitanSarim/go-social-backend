@@ -4,6 +4,13 @@ migrate create -seq -ext sql -dir ./cmd/migrate/migrations create_posts
 To do migraion Up
 migrate -path ./cmd/migrate/migrations -database "postgres://postgres:12345@localhost/go_social?sslmode=disable" up
 
-migrate -database "postgres://postgres:12345@localhost/go_social?sslmode=disable" -path ./migrations force 6
+=> it db get dirtry get current migration 
+migrate -database "postgres://postgres:12345@localhost/go_social?sslmode=disable" -path ./migrations -verbose version
 
+=> Then down by 1
 migrate -database "postgres://postgres:12345@localhost/go_social?sslmode=disable" -path ./migrations down 1
+
+=> then push migration
+
+
+
