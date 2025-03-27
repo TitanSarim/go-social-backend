@@ -24,6 +24,7 @@ type Storage struct {
 		Create(context.Context, *sql.Tx, *User) (*User, error)
 		GetByID(context.Context, int64) (*User, error)
 		CreateAndInvite(ctx context.Context, user *User, token string, invitationExp time.Duration) error
+		Activate(context.Context, string) error
 	}
 	Comments interface {
         GETByPostID(context.Context, int64) ([]Comment, error)
